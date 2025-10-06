@@ -1,0 +1,99 @@
+{
+  "info": {
+    "name": "BFrame Core API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:8000/health"
+      }
+    },
+    {
+      "name": "Bootstrap",
+      "request": {
+        "method": "POST",
+        "url": "http://localhost:8000/auth/bootstrap"
+      }
+    },
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key":"Content-Type","value":"application/x-www-form-urlencoded"}
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {"key":"username","value":"admin@bframe.local"},
+            {"key":"password","value":"admin123"}
+          ]
+        },
+        "url": "http://localhost:8000/auth/login"
+      },
+      "response": []
+    },
+    {
+      "name": "List Modules",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key":"Authorization","value":"Bearer {{token}}"}
+        ],
+        "url": "http://localhost:8000/modules/"
+      }
+    },
+    {
+      "name": "Create Tenant",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key":"Authorization","value":"Bearer {{token}}"},
+          {"key":"Content-Type","value":"application/json"}
+        ],
+        "body": {"mode":"raw","raw":"{\n  \"name\": \"Acme\",\n  \"slug\": \"acme\"\n}"},
+        "url": "http://localhost:8000/tenants/"
+      }
+    },
+    {
+      "name": "CRM List Leads",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key":"Authorization","value":"Bearer {{token}}"}
+        ],
+        "url": "http://localhost:8000/crm/leads"
+      }
+    },
+    {
+      "name": "CRM Create Lead",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key":"Authorization","value":"Bearer {{token}}"},
+          {"key":"Content-Type","value":"application/json"}
+        ],
+        "body": {"mode":"raw","raw":"{\n  \"name\": \"Jane Doe\",\n  \"email\": \"jane@example.com\"\n}"},
+        "url": "http://localhost:8000/crm/leads"
+      }
+    },
+    {
+      "name": "Publish Event",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key":"Authorization","value":"Bearer {{token}}"},
+          {"key":"Content-Type","value":"application/json"}
+        ],
+        "body": {"mode":"raw","raw":"{\n  \"routing_key\": \"invoice.created\",\n  \"payload\": {\n    \"id\": 1\n  }\n}"},
+        "url": "http://localhost:8000/events/publish"
+      }
+    }
+  ],
+  "variable": [
+    { "key": "token", "value": "" }
+  ]
+}

@@ -1,0 +1,52 @@
+name: Backend CI
+
+on:
+  push:
+    paths:
+      - 'services/core/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    paths:
+      - 'services/core/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: bframe
+          POSTGRES_PASSWORD: bframe
+          POSTGRES_DB: bframe
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U bframe" --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        working-directory: services/core
+        run: |
+          python -m venv .venv
+          . .venv/bin/activate
+          pip install -r requirements.txt
+      - name: Lint import
+        working-directory: services/core
+        run: |
+          python -c "import fastapi, sqlalchemy, alembic; print('Deps OK')"
+      - name: Migrate DB (alembic upgrade head)
+        env:
+          DATABASE_URL: postgresql+psycopg2://bframe:bframe@localhost:5432/bframe
+          REDIS_URL: redis://localhost:6379/0
+          JWT_SECRET: ci_secret
+        working-directory: services/core
+        run: |
+          . .venv/bin/activate
+          alembic upgrade head
+      - name: Run unit placeholder
+        run: echo "No tests yet"

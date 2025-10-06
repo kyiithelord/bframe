@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -5,6 +6,7 @@ from .config import settings
 from .db import init_db
 from .routers import auth, tenants, modules, events, workflows, ai
 from .module_loader import load_modules
+from .mq import start_background_consumer
 
 app = FastAPI(title="BFrame Core", version="0.1.0")
 
@@ -20,6 +22,8 @@ app.add_middleware(
 async def on_startup():
     init_db()
     load_modules(app)
+    loop = asyncio.get_event_loop()
+    await start_background_consumer(loop)
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(tenants.router, prefix="/tenants", tags=["tenants"])

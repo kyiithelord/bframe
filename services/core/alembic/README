@@ -1,0 +1,5 @@
+Alembic migrations for BFrame Core.
+
+Commands (run inside services/core container or with local venv):
+- alembic revision --autogenerate -m "init"
+- alembic upgrade head

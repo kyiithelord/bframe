@@ -67,3 +67,36 @@ Ensure Postgres and Redis envs point to local instances.
 ---
 
 Contributions welcome. See `docs/Roadmap.md` for priorities.
+
+## Messaging (RabbitMQ)
+- RabbitMQ is included in `docker-compose.yml` with the management UI at `http://localhost:15672` (guest/guest).
+- Publish an event:
+  - `POST /events/publish` with `{ "routing_key": "invoice.created", "payload": { ... } }` (requires Bearer token)
+- A background consumer is started on app startup (`app/mq.py`) and logs received events.
+
+## Database Migrations (Alembic)
+- Auto-run on container start via `services/core/entrypoint.sh` (best-effort `alembic upgrade head`).
+- Manual commands inside core container:
+  - `alembic revision --autogenerate -m "message"`
+  - `alembic upgrade head`
+- Migration scripts live in `services/core/alembic/versions/`.
+
+## Frontend (Next.js Admin Shell)
+- Path: `apps/frontend/`
+- Dev server via Docker Compose at `http://localhost:3000`.
+- Uses `NEXT_PUBLIC_API_BASE` (set to `http://core:8000` in Compose) to call the API.
+- Minimal UI to login and create/list CRM leads in `app/page.tsx`.
+
+Run standalone (optional):
+```
+cd apps/frontend
+npm install
+npm run dev
+```
+
+## Postman Collection
+- Import `docs/postman/BFrame-Core.postman_collection.json`.
+- Set `{{token}}` variable after calling Login.
+
+## CI
+- GitHub Actions workflow: `.github/workflows/backend-ci.yml` runs dependency check and Alembic migrations on Postgres service.

@@ -4,6 +4,7 @@ class Settings(BaseSettings):
     ENV: str = "dev"
     DATABASE_URL: str
     REDIS_URL: str
+    RABBITMQ_URL: str = "amqp://guest:guest@rabbitmq:5672/"
     JWT_SECRET: str
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRE_MINUTES: int = 60
