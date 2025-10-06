@@ -68,6 +68,40 @@ Ensure Postgres and Redis envs point to local instances.
 
 Contributions welcome. See `docs/Roadmap.md` for priorities.
 
+## Run Backend + Frontend (Docker)
+- Start everything:
+  - `make up` (or `docker compose up -d --build`)
+- Logs:
+  - `make logs` or `make core-logs`
+- Bootstrap + Demo:
+  - `make bootstrap`
+  - `make token` (prints JWT)
+  - `make demo` (creates and lists a demo lead)
+- Open:
+  - Backend: http://localhost:8000 (docs at `/docs`)
+  - Frontend: http://localhost:3000
+  - RabbitMQ: http://localhost:15672 (guest/guest)
+
+## Run Locally (without Docker)
+- Backend:
+  ```bash
+  cd services/core
+  python -m venv .venv && source .venv/bin/activate
+  pip install -r requirements.txt
+  export DATABASE_URL=postgresql+psycopg2://bframe:bframe@localhost:5432/bframe
+  export REDIS_URL=redis://localhost:6379/0
+  export RABBITMQ_URL=amqp://guest:guest@localhost:5672/
+  export JWT_SECRET=dev_secret_change
+  uvicorn app.main:app --reload
+  ```
+- Frontend:
+  ```bash
+  cd apps/frontend
+  npm install
+  export NEXT_PUBLIC_API_BASE=http://localhost:8000
+  npm run dev
+  ```
+
 ## Messaging (RabbitMQ)
 - RabbitMQ is included in `docker-compose.yml` with the management UI at `http://localhost:15672` (guest/guest).
 - Publish an event:
