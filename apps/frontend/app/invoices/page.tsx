@@ -22,6 +22,7 @@ type Invoice = {
   currency: string;
   total: number;
   items: InvoiceItem[];
+  files?: { name: string; url: string }[];
 };
 
 export default function InvoicesPage() {
@@ -35,6 +36,7 @@ export default function InvoicesPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
+  const [uploads, setUploads] = useState<{ name: string; url: string }[]>([]);
 
   function pushToast(kind: ToastItem["kind"], message: string) {
     const id = Date.now() + Math.random();
@@ -52,7 +54,10 @@ export default function InvoicesPage() {
       body: body.toString(),
     });
     const data = await res.json();
-    if (data.access_token) setToken(data.access_token);
+    if (data.access_token) {
+      setToken(data.access_token);
+      try { localStorage.setItem("token", data.access_token); } catch {}
+    }
     else setError("Login failed");
   }
 
@@ -84,7 +89,7 @@ export default function InvoicesPage() {
     };
     // optimistic local insertion
     const tempId = -Math.floor(Math.random()*1000000);
-    const optimistic: Invoice = { id: tempId, number, customer_name: customer, issue_date: issueDate, due_date: null, currency: "USD", status: "draft", total: totalNew, items: items };
+    const optimistic: Invoice = { id: tempId, number, customer_name: customer, issue_date: issueDate, due_date: null, currency: "USD", status: "draft", total: totalNew, items: items, files: uploads };
     setInvoices(prev => [optimistic, ...prev]);
     const res = await fetch(`${API_BASE}/accounting/invoices`, {
       method: "POST",
@@ -104,6 +109,7 @@ export default function InvoicesPage() {
     setNumber("");
     setCustomer("");
     setItems([{ description: "", quantity: 1, unit_price: 0 }]);
+    setUploads([]);
     loadInvoices();
   }
 
@@ -155,16 +161,29 @@ export default function InvoicesPage() {
               </tr>
             </thead>
             <tbody>
-              {invoices.map(inv => (
-                <tr key={inv.id} style={{ borderTop: "1px solid #eee" }}>
-                  <td>{inv.number}</td>
-                  <td>{inv.customer_name}</td>
-                  <td align="right">{inv.total.toFixed(2)} {inv.currency}</td>
-                  <td>{inv.status}</td>
-                  <td>
-                    <button onClick={() => recordPayment(inv.id, inv.total)}>Pay</button>
-                  </td>
-                </tr>
+              {invoices.map((inv) => (
+                <React.Fragment key={inv.id}>
+                  <tr style={{ borderTop: "1px solid #eee" }}>
+                    <td>{inv.number}</td>
+                    <td>{inv.customer_name}</td>
+                    <td align="right">{inv.total.toFixed(2)} {inv.currency}</td>
+                    <td>{inv.status}</td>
+                    <td>
+                      <button onClick={() => recordPayment(inv.id, inv.total)}>Pay</button>
+                    </td>
+                  </tr>
+                  {inv.files && inv.files.length > 0 && (
+                    <tr>
+                      <td colSpan={5}>
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                          {inv.files.map((f: { name: string; url: string }) => (
+                            <a key={f.url} href={f.url} target="_blank" rel="noreferrer">{f.name}</a>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               ))}
               {invoices.length === 0 && (
                 <tr><td colSpan={5}>No invoices</td></tr>
@@ -197,6 +216,31 @@ export default function InvoicesPage() {
                   </div>
                 ))}
                 <button onClick={() => setItems([...items, { description: "", quantity: 1, unit_price: 0 }])}>+ Add item</button>
+                <h4 style={{ marginTop: 12 }}>Attachments</h4>
+                <input type="file" onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  try {
+                    const form = new FormData();
+                    form.append("file", f);
+                    const res = await fetch(`${API_BASE}/files`, {
+                      method: "POST",
+                      headers: { Authorization: `Bearer ${token}` },
+                      body: form,
+                    });
+                    if (!res.ok) throw new Error(await res.text());
+                    const data = await res.json();
+                    setUploads(prev => [...prev, { name: data.name, url: data.url }]);
+                    pushToast("success", `Uploaded ${data.name}`);
+                  } catch (err) {
+                    pushToast("error", "Upload failed");
+                  }
+                }} />
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
+                  {uploads.map(u => (
+                    <a key={u.url} href={u.url} target="_blank" rel="noreferrer">{u.name}</a>
+                  ))}
+                </div>
                 <div style={{ marginTop: 12 }}>Total: {totalNew.toFixed(2)} USD</div>
                 <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
                   <button onClick={createInvoice}>Create</button>
