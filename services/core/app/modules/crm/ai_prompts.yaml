@@ -1,0 +1,5 @@
+intents:
+  - name: list_overdue_followups
+    description: "List leads that have not been contacted in 14 days"
+    prompt: |
+      You are an assistant helping a sales rep. Identify leads overdue for follow-up.

@@ -1,0 +1,32 @@
+version: '3.9'
+services:
+  core:
+    build:
+      context: ./services/core
+      dockerfile: Dockerfile
+    env_file:
+      - ./services/core/.env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: bframe
+      POSTGRES_PASSWORD: bframe
+      POSTGRES_DB: bframe
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+volumes:
+  pgdata: {}
