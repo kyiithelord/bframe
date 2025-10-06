@@ -45,6 +45,36 @@ services:
       timeout: 5s
       retries: 20
 
+  meilisearch:
+    image: getmeili/meilisearch:v1.7
+    environment:
+      MEILI_NO_ANALYTICS: "true"
+      MEILI_MASTER_KEY: meili_master_key
+    ports:
+      - "7700:7700"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:7700/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  minio:
+    image: minio/minio:RELEASE.2024-05-01T01-11-10Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9001"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
   frontend:
     build:
       context: ./apps/frontend
@@ -58,3 +88,4 @@ services:
 
 volumes:
   pgdata: {}
+  minio_data: {}
