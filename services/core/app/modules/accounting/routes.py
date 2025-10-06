@@ -8,6 +8,7 @@ from ...mq import publish
 from .models import Invoice, InvoiceItem, Payment
 from .schemas import InvoiceCreate, InvoiceOut, InvoiceOutItem, PaymentIn, PaymentOut
 from ...rbac import require_permission
+from ...search_client import index_invoice
 
 router = APIRouter(prefix="/accounting", tags=["accounting"])
 
@@ -62,6 +63,16 @@ def create_invoice(payload: InvoiceCreate, db: Session = Depends(get_db), user=D
         asyncio.get_event_loop().create_task(publish("invoice.created", {"id": inv.id, "number": inv.number}))
     except Exception:
         pass
+    try:
+        index_invoice({
+            "id": inv.id,
+            "number": inv.number,
+            "customer_name": inv.customer_name,
+            "status": inv.status,
+            "total": float(inv.total),
+        })
+    except Exception:
+        pass
     return inv
 
 
@@ -81,6 +92,16 @@ def add_payment(invoice_id: int, payload: PaymentIn, db: Session = Depends(get_d
     try:
         import asyncio
         asyncio.get_event_loop().create_task(publish("invoice.paid", {"id": inv.id, "amount": float(payload.amount)}))
+    except Exception:
+        pass
+    try:
+        index_invoice({
+            "id": inv.id,
+            "number": inv.number,
+            "customer_name": inv.customer_name,
+            "status": inv.status,
+            "total": float(inv.total),
+        })
     except Exception:
         pass
     return pay

@@ -40,7 +40,7 @@
 
 ## 5. Go-to-Market Strategy
 - **Step 1**: Target early-stage SMBs & startups (10–100 employees)
-- **Step 2**: Position as “Odoo Simplified with AI”
+- **Step 2**: Position as “Simplified with AI”
 - **Step 3**: Build strong developer community (open-source GitHub + docs)
 - **Step 4**: Launch marketplace (invite third-party devs to build plugins)
 - **Step 5**: Expand into verticals (manufacturing, services, retail)
@@ -60,7 +60,7 @@
 
 ## 8. Risks & Mitigations
 - **Complexity creep** → Strict module boundaries, opinionated defaults
-- **Data migration friction** → Importers for CSV, QuickBooks/Xero, Odoo
+- **Data migration friction** → Importers for CSV, QuickBooks/Xero,
 - **Vendor lock fears** → Open-core licensing, data export, on-prem option
 - **Privacy concerns** → Clear AI data policy, SOC2 roadmap, regional hosting
 
