@@ -11,17 +11,29 @@ _connection: Optional[aio_pika.RobustConnection] = None
 _channel: Optional[aio_pika.abc.AbstractChannel] = None
 _exchange: Optional[aio_pika.abc.AbstractExchange] = None
 
-async def connect():
+async def connect(max_retries: int = 0):
     global _connection, _channel, _exchange
-    if _connection and not _connection.is_closed:
-        return _connection
-    _connection = await aio_pika.connect_robust(settings.RABBITMQ_URL)
-    _channel = await _connection.channel()
-    await _channel.set_qos(prefetch_count=10)
-    _exchange = await _channel.declare_exchange(RABBIT_EXCHANGE, aio_pika.ExchangeType.TOPIC, durable=True)
-    queue = await _channel.declare_queue(RABBIT_QUEUE, durable=True)
-    await queue.bind(_exchange, routing_key="#")
-    return _connection
+    attempt = 0
+    while True:
+        try:
+            if _connection and not _connection.is_closed:
+                return _connection
+            _connection = await aio_pika.connect_robust(settings.RABBITMQ_URL)
+            _channel = await _connection.channel()
+            await _channel.set_qos(prefetch_count=10)
+            _exchange = await _channel.declare_exchange(
+                RABBIT_EXCHANGE, aio_pika.ExchangeType.TOPIC, durable=True
+            )
+            queue = await _channel.declare_queue(RABBIT_QUEUE, durable=True)
+            await queue.bind(_exchange, routing_key="#")
+            return _connection
+        except Exception as e:
+            attempt += 1
+            if max_retries and attempt > max_retries:
+                raise
+            # exponential backoff up to 5s
+            backoff = min(5, 0.5 * (2 ** (attempt - 1)))
+            await asyncio.sleep(backoff)
 
 async def publish(routing_key: str, payload: dict):
     await connect()
@@ -31,18 +43,23 @@ async def publish(routing_key: str, payload: dict):
     await _exchange.publish(message, routing_key=routing_key)
 
 async def consume(handler):
-    await connect()
-    assert _channel is not None
-    queue = await _channel.declare_queue(RABBIT_QUEUE, durable=True)
+    while True:
+        try:
+            await connect()
+            assert _channel is not None
+            queue = await _channel.declare_queue(RABBIT_QUEUE, durable=True)
 
-    async with queue.iterator() as queue_iter:
-        async for message in queue_iter:
-            async with message.process():
-                try:
-                    data = json.loads(message.body)
-                except Exception:
-                    data = {"raw": message.body.decode(errors="ignore")}
-                await handler(message.routing_key, data)
+            async with queue.iterator() as queue_iter:
+                async for message in queue_iter:
+                    async with message.process():
+                        try:
+                            data = json.loads(message.body)
+                        except Exception:
+                            data = {"raw": message.body.decode(errors="ignore")}
+                        await handler(message.routing_key, data)
+        except Exception as e:
+            # sleep briefly and retry on any connection/consumer error
+            await asyncio.sleep(1)
 
 async def default_handler(routing_key: str, payload: dict):
     print(f"[event] {routing_key}: {payload}")

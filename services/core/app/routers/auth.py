@@ -21,15 +21,29 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 @router.post("/bootstrap")
 def bootstrap(db: Session = Depends(get_db)):
     # Create default tenant and superuser if not existing
+    # Use safe defaults if env vars are missing to avoid 500s
+    super_email = settings.SUPERUSER_EMAIL or "admin@bframe.local"
+    super_password = settings.SUPERUSER_PASSWORD or "admin123"
+
+    created = {"tenant": False, "admin": False}
+
     tenant = db.query(Tenant).filter(Tenant.slug == "default").first()
     if not tenant:
         tenant = Tenant(name="Default", slug="default")
         db.add(tenant)
         db.commit()
         db.refresh(tenant)
-    admin = db.query(User).filter(User.email == settings.SUPERUSER_EMAIL).first()
+        created["tenant"] = True
+
+    admin = db.query(User).filter(User.email == super_email).first()
     if not admin:
-        admin = User(email=settings.SUPERUSER_EMAIL, hashed_password=get_password_hash(settings.SUPERUSER_PASSWORD or "admin123"), tenant_id=tenant.id)
+        admin = User(
+            email=super_email,
+            hashed_password=get_password_hash(super_password),
+            tenant_id=tenant.id,
+        )
         db.add(admin)
         db.commit()
-    return {"status": "bootstrapped"}
+        created["admin"] = True
+
+    return {"status": "ok", "created": created, "email": super_email}
