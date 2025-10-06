@@ -7,6 +7,7 @@ from ..schemas.auth import Token
 from ..models.user import User
 from ..models.tenant import Tenant
 from ..config import settings
+from ..models.rbac import Role, Permission, UserRole, RolePermission
 
 router = APIRouter()
 
@@ -46,4 +47,41 @@ def bootstrap(db: Session = Depends(get_db)):
         db.commit()
         created["admin"] = True
 
-    return {"status": "ok", "created": created, "email": super_email}
+    # Seed RBAC: admin role and basic permissions
+    admin_role = db.query(Role).filter(Role.name == "admin").first()
+    if not admin_role:
+        admin_role = Role(name="admin", description="Superuser role")
+        db.add(admin_role)
+        db.commit()
+
+    # Ensure admin permission and some module perms exist
+    def ensure_perm(code: str, desc: str = ""):
+        p = db.query(Permission).filter(Permission.code == code).first()
+        if not p:
+            p = Permission(code=code, description=desc)
+            db.add(p)
+            db.commit()
+        # grant to admin_role
+        rp = db.query(RolePermission).filter(RolePermission.role_id == admin_role.id, RolePermission.permission_id == p.id).first()
+        if not rp:
+            rp = RolePermission(role_id=admin_role.id, permission_id=p.id)
+            db.add(rp)
+            db.commit()
+
+    for code in [
+        "admin",
+        "crm.read",
+        "crm.write",
+        "tenants.read",
+        "modules.read",
+    ]:
+        ensure_perm(code)
+
+    # assign admin role to admin user
+    ur = db.query(UserRole).filter(UserRole.user_id == admin.id, UserRole.role_id == admin_role.id).first()
+    if not ur:
+        ur = UserRole(user_id=admin.id, role_id=admin_role.id)
+        db.add(ur)
+        db.commit()
+
+    return {"status": "ok", "created": created, "email": super_email, "role": "admin"}
