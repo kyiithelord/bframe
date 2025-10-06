@@ -7,6 +7,7 @@ from ...security import get_current_user
 from ...mq import publish
 from .models import Invoice, InvoiceItem, Payment
 from .schemas import InvoiceCreate, InvoiceOut, InvoiceOutItem, PaymentIn, PaymentOut
+from ...rbac import require_permission
 
 router = APIRouter(prefix="/accounting", tags=["accounting"])
 
@@ -28,13 +29,13 @@ def compute_totals(inv: Invoice):
 
 
 @router.get("/invoices", response_model=list[InvoiceOut])
-def list_invoices(db: Session = Depends(get_db), user=Depends(get_current_user)):
+def list_invoices(db: Session = Depends(get_db), user=Depends(get_current_user), perm=Depends(require_permission("accounting.read"))):
     rows = db.execute(select(Invoice).order_by(Invoice.id.desc())).scalars().all()
     return rows
 
 
 @router.post("/invoices", response_model=InvoiceOut)
-def create_invoice(payload: InvoiceCreate, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def create_invoice(payload: InvoiceCreate, db: Session = Depends(get_db), user=Depends(get_current_user), perm=Depends(require_permission("accounting.write"))):
     if db.query(Invoice).filter(Invoice.number == payload.number).first():
         raise HTTPException(status_code=400, detail="Invoice number already exists")
     inv = Invoice(
@@ -65,7 +66,7 @@ def create_invoice(payload: InvoiceCreate, db: Session = Depends(get_db), user=D
 
 
 @router.post("/invoices/{invoice_id}/payments", response_model=PaymentOut)
-def add_payment(invoice_id: int, payload: PaymentIn, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def add_payment(invoice_id: int, payload: PaymentIn, db: Session = Depends(get_db), user=Depends(get_current_user), perm=Depends(require_permission("accounting.write"))):
     inv = db.get(Invoice, invoice_id)
     if not inv:
         raise HTTPException(status_code=404, detail="Invoice not found")

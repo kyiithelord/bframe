@@ -30,3 +30,19 @@ def require_permission(code: str):
         return True
 
     return _dep
+
+
+def require_any_permission(*codes: str):
+    def _dep(user=Depends(get_current_user), db: Session = Depends(get_db)):
+        perms = user_permissions(db, user.id)
+        if "admin" in perms:
+            return True
+        for c in codes:
+            if c in perms:
+                return True
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Missing any of permissions: {', '.join(codes)}",
+        )
+
+    return _dep
