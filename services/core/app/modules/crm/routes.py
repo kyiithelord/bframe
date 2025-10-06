@@ -7,6 +7,7 @@ from .models import Lead as LeadModel
 from .schemas import LeadCreate, LeadOut, LeadUpdate, LeadQuery
 from ...rbac import require_permission
 from ...audit import log_action
+from ...search_client import index_lead, delete_lead
 
 router = APIRouter(prefix="/crm", tags=["crm"])
 
@@ -54,6 +55,10 @@ def create_lead(payload: LeadCreate, db: Session = Depends(get_db), user=Depends
     db.commit()
     db.refresh(obj)
     log_action(db, actor_user_id=user.id, action="lead.create", entity="lead", entity_id=obj.id, meta={"name": obj.name})
+    try:
+        index_lead({"id": obj.id, "name": obj.name, "email": obj.email, "status": obj.status})
+    except Exception:
+        pass
     return obj
 
 @router.put("/leads/{lead_id}", response_model=LeadOut)
@@ -67,6 +72,10 @@ def replace_lead(lead_id: int, payload: LeadCreate, db: Session = Depends(get_db
     db.commit()
     db.refresh(obj)
     log_action(db, actor_user_id=user.id, action="lead.update", entity="lead", entity_id=obj.id)
+    try:
+        index_lead({"id": obj.id, "name": obj.name, "email": obj.email, "status": obj.status})
+    except Exception:
+        pass
     return obj
 
 @router.patch("/leads/{lead_id}", response_model=LeadOut)
@@ -83,6 +92,10 @@ def patch_lead(lead_id: int, payload: LeadUpdate, db: Session = Depends(get_db),
     db.commit()
     db.refresh(obj)
     log_action(db, actor_user_id=user.id, action="lead.patch", entity="lead", entity_id=obj.id)
+    try:
+        index_lead({"id": obj.id, "name": obj.name, "email": obj.email, "status": obj.status})
+    except Exception:
+        pass
     return obj
 
 @router.delete("/leads/{lead_id}")
@@ -93,6 +106,10 @@ def delete_lead(lead_id: int, db: Session = Depends(get_db), user=Depends(get_cu
     db.delete(obj)
     db.commit()
     log_action(db, actor_user_id=user.id, action="lead.delete", entity="lead", entity_id=lead_id)
+    try:
+        delete_lead(lead_id)
+    except Exception:
+        pass
     return {"deleted": 1}
 
 

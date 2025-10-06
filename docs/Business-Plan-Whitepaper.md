@@ -19,8 +19,8 @@ A modular OS with a strong core: unified data, RBAC, event-driven workflows, and
 
 ## Market
 - 300M+ SMBs worldwide; beachhead: startups and SMBs (10–100 employees)
-- Competitive set: Odoo, Zoho, QuickBooks + Zapier stacks, vertical ERPs
-- Positioning: “Odoo Simplified with AI”
+- Competitive set:Zoho, QuickBooks + Zapier stacks, vertical ERPs
+- Positioning: “Simplified with AI”
 
 ## Go-To-Market
 - Developer-first community; generous free tier
