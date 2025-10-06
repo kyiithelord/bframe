@@ -1,0 +1,63 @@
+# General
+.DS_Store
+Thumbs.db
+*.log
+logs/
+*.tmp
+.tmp/
+.cache/
+.env
+.env.*
+!.env.example
+
+# Editors/IDE
+.vscode/
+.idea/
+*.swp
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.eggs/
+build/
+dist/
+
+# Node/JS
+node_modules/
+**/node_modules/
+.npm/
+.pnp/
+.pnp.js
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+
+# Next.js / React / Frontend
+.next/
+.next-cache/
+.out/
+.vercel/
+.turbo/
+coverage/
+parcel-cache/
+.parcel-cache/
+.sass-cache/
+
+yarn-error.log
+npm-debug.log
+
+# Monorepo common
+packages/**/dist/
+packages/**/build/
+
+# OS
+Icon?
