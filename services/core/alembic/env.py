@@ -12,6 +12,7 @@ from app.models.base import Base  # type: ignore
 from app.models import user, tenant, module  # noqa: F401
 from app.models import rbac  # noqa: F401
 from app.modules.crm import models as crm_models  # noqa: F401
+from app.modules.accounting import models as acc_models  # noqa: F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
