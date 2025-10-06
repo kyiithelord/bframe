@@ -76,6 +76,9 @@ def bootstrap(db: Session = Depends(get_db)):
         "modules.read",
         "accounting.read",
         "accounting.write",
+        "search.read",
+        "files.write",
+        "audit.read",
     ]:
         ensure_perm(code)
 

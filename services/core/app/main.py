@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .config import settings
 from .db import init_db
 from .routers import auth, tenants, modules, events, workflows, ai
+from .routers import search, files
 from .routers import admin_audit
 from .module_loader import load_modules
 from .mq import start_background_consumer
@@ -33,6 +34,8 @@ app.include_router(events.router, prefix="/events", tags=["events"])
 app.include_router(workflows.router, prefix="/workflows", tags=["workflows"])
 app.include_router(ai.router, prefix="/ai", tags=["ai"])
 app.include_router(admin_audit.router)
+app.include_router(search.router)
+app.include_router(files.router)
 
 @app.get("/health")
 async def health():
